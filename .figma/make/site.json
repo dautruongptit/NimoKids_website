@@ -1,0 +1,10 @@
+{
+  "description": "Engage preschoolers aged 1–5 with a fun, visually rich quiz game that teaches through playful guessing, colorful illustrations, and instant feedback.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
