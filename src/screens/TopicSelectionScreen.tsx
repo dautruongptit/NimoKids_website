@@ -16,12 +16,14 @@ type Props = {
   onSelect: (choice: TopicChoice) => void;
   onBack: () => void;
   onStart: () => void;
+  starting?: boolean;
+  startError?: string | null;
   say: (text: string) => void;
 };
 
 const VISIBLE_AT_FIRST = 10;
 
-export default function TopicSelectionScreen({ ageLabel, selected, onSelect, onBack, onStart, say }: Props) {
+export default function TopicSelectionScreen({ ageLabel, selected, onSelect, onBack, onStart, starting = false, startError = null, say }: Props) {
   const [state, retry] = useTopics();
   const [expanded, setExpanded] = useState(false);
 
@@ -58,13 +60,14 @@ export default function TopicSelectionScreen({ ageLabel, selected, onSelect, onB
         {choices.length > VISIBLE_AT_FIRST && <Button variant="blue" className="more-topics" onClick={() => setExpanded(value => !value)}>{expanded ? 'Fewer little worlds ↑' : 'More little worlds ↓'}</Button>}
       </>}
 
+      {startError && <p className="start-error" role="alert">{startMessage(startError)}</p>}
       <Hint><strong>No pressure, just exploration!</strong><p>Every answer is a new discovery. Let's see what we can learn!</p></Hint>
       <div className="age-reminder">Made for your {ageLabel}-year-old explorer <span>♡</span></div>
     </main>
 
     <div className="play-dock"><div className="dock-inner">
       <div className="selected-topic"><span>{selected.topic ? selectedVisual.emoji : '🌈'}</span><div><small>Selected Topic:</small><strong>{selected.name}</strong></div></div>
-      <Button onClick={onStart} disabled={state.status !== 'ready'}>Let's Play! 🚀 <span>▷</span></Button>
+      <Button onClick={onStart} disabled={state.status !== 'ready' || starting}>{starting ? 'Getting ready… ✨' : <>Let's Play! 🚀 <span>▷</span></>}</Button>
     </div></div>
   </>;
 }
@@ -86,4 +89,11 @@ function TopicsError({ code, onRetry }: { code: string; onRetry: () => void }) {
     <p>{offline ? 'The little worlds are a bit shy right now. Check the internet and try again.' : 'Something went wrong on our side. Please try again in a moment.'}</p>
     <Button onClick={onRetry}>Try again 🔄</Button>
   </div>;
+}
+
+function startMessage(code: string): string {
+  if (code === 'INSUFFICIENT_QUESTIONS' || code === 'TOPIC_NOT_PLAYABLE') return "This little world isn't ready to play yet. Please pick another one!";
+  if (code === 'SESSION_LOST') return "That round ended early. Let's start a new one!";
+  if (['NETWORK_ERROR', 'TIMEOUT', 'HTTP_502', 'HTTP_503', 'HTTP_504'].includes(code)) return 'We could not reach the little worlds. Check the internet and try again.';
+  return 'Something went wrong on our side. Please try again in a moment.';
 }
