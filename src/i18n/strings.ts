@@ -49,7 +49,7 @@ const en = {
   footerTitle: 'Safe Digital Playroom for Toddlers', footerText: 'No ads, gentle guidance, and endless little smiles',
   footerAges: '💛 Ages 1–5 • No accounts required', footerMade: 'Made with love for little hands.',
 
-  langLabel: 'Language', langVi: 'Tiếng Việt', langViEn: 'Học tiếng Anh', langViHint: 'Full Vietnamese', langViEnHint: 'Vietnamese interface, English questions', recommended: 'Recommended',
+  langLabel: 'Language', langVi: 'Tiếng Việt', langViEn: 'Học tiếng Anh', langViHint: 'Full Vietnamese', langViEnHint: 'Vietnamese questions, English answers', recommended: 'Recommended',
 };
 
 export type UiKey = keyof typeof en;
@@ -102,7 +102,7 @@ const vi: Record<UiKey, string> = {
   footerTitle: 'Phòng chơi số an toàn cho bé', footerText: 'Không quảng cáo, hướng dẫn nhẹ nhàng và thật nhiều nụ cười',
   footerAges: '💛 Từ 1–5 tuổi • Không cần tài khoản', footerMade: 'Làm bằng tình yêu cho đôi tay nhỏ.',
 
-  langLabel: 'Ngôn ngữ', langVi: 'Tiếng Việt', langViEn: 'Học tiếng Anh', langViHint: 'Toàn bộ tiếng Việt', langViEnHint: 'Giao diện tiếng Việt, câu hỏi tiếng Anh', recommended: 'Khuyên dùng',
+  langLabel: 'Ngôn ngữ', langVi: 'Tiếng Việt', langViEn: 'Học tiếng Anh', langViHint: 'Toàn bộ tiếng Việt', langViEnHint: 'Câu hỏi tiếng Việt, đáp án tiếng Anh', recommended: 'Khuyên dùng',
 };
 
 export const STRINGS: Record<UiLang, Record<UiKey, string>> = { en, vi };

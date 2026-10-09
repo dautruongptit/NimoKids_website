@@ -22,7 +22,7 @@ function Progress({ step }: { step: number }) {
 }
 
 function NimoKids() {
-  const { mode, t, tl, uiLang, contentLang } = useLanguage();
+  const { mode, t, tl, uiLang, questionLang } = useLanguage();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const screen = pathname.slice(1) || 'home';
@@ -124,7 +124,7 @@ function NimoKids() {
         else throw error;
       }
       const state = data.result === 'CORRECT' ? 'correct' : data.result === 'TIMEOUT' ? 'timeout' : 'wrong';
-      setAnswerData(data); sound(state); say(data.feedback.message, contentLang);
+      setAnswerData(data); sound(state); say(data.feedback.message, questionLang);
     } catch (error) {
       const offline = error instanceof ApiError && ['NETWORK_ERROR', 'TIMEOUT', 'HTTP_502', 'HTTP_503', 'HTTP_504'].includes(error.code);
       if (offline) { setSendError(true); setSelected(null); locked.current = false; return; } // let the child tap again
@@ -157,7 +157,7 @@ function NimoKids() {
     if (screen !== 'quiz' || !question || !session) return;
     let active = true;
     setTimerRunning(false); setSeconds(timeLimit);
-    say(question.questionText, contentLang, () => {
+    say(question.questionText, questionLang, () => {
       if (!active) return;
       setTimerRunning(true);
       void startTimer(session.sessionId, question.id).catch(() => { /* best effort: the server falls back to its capped start */ });
@@ -206,7 +206,7 @@ function NimoKids() {
 
     {screen === 'topics' && age && <TopicSelectionScreen ageLabel={age} selected={choice} onSelect={setChoice} onBack={() => go('age')} onStart={start} starting={starting} startError={startError} say={say} />}
 
-    {screen === 'quiz' && question && <main className="quiz-page"><div className="screen-top"><span className="topic-indicator">{topicEmoji} {topicName}</span><div className="quiz-progress" aria-label={t('questionAria', { n: questionNumber, total })}>{Array.from({ length: total }, (_, position) => <span className={position < questionNumber ? 'current' : ''} key={position}>★</span>)}</div><span className="question-counter">{t('question', { n: questionNumber, total })}</span></div><section className={`quiz-panel ${transitioning ? 'question-transition' : ''}`}><div className="quiz-heading"><div><span className="tiny-label">{t('tinyLabel')}</span><h1>{question.questionText} <Speaker onClick={() => say(question.questionText, contentLang)} /></h1></div><div className={`countdown ${seconds <= 2 && !feedback ? 'timer-low' : ''}`} aria-label={t('secondsAria', { n: seconds })}><span>⏱</span><strong>{seconds}</strong><small>{t('seconds')}</small></div></div><div className={`quiz-image ${topicColor}`} key={question.id}>{questionImageSrc(question.questionImage) && <img src={questionImageSrc(question.questionImage)!} alt={t('pictureAlt')} />}<span className="image-sparkle" aria-hidden="true">✦</span></div><div className={`feedback-line ${feedback || ''}`} role="status">{feedback === 'correct' ? t('fbCorrect') : feedback === 'wrong' ? t('fbWrong') : feedback === 'timeout' ? t('fbTimeout') : sendError ? t('tapAgain') : t('tapAnswer')}</div><div className="answer-grid">{question.options.map(entry => {
+    {screen === 'quiz' && question && <main className="quiz-page"><div className="screen-top"><span className="topic-indicator">{topicEmoji} {topicName}</span><div className="quiz-progress" aria-label={t('questionAria', { n: questionNumber, total })}>{Array.from({ length: total }, (_, position) => <span className={position < questionNumber ? 'current' : ''} key={position}>★</span>)}</div><span className="question-counter">{t('question', { n: questionNumber, total })}</span></div><section className={`quiz-panel ${transitioning ? 'question-transition' : ''}`}><div className="quiz-heading"><div><span className="tiny-label">{t('tinyLabel')}</span><h1>{question.questionText} <Speaker onClick={() => say(question.questionText, questionLang)} /></h1></div><div className={`countdown ${seconds <= 2 && !feedback ? 'timer-low' : ''}`} aria-label={t('secondsAria', { n: seconds })}><span>⏱</span><strong>{seconds}</strong><small>{t('seconds')}</small></div></div><div className={`quiz-image ${topicColor}`} key={question.id}>{questionImageSrc(question.questionImage) && <img src={questionImageSrc(question.questionImage)!} alt={t('pictureAlt')} />}<span className="image-sparkle" aria-hidden="true">✦</span></div><div className={`feedback-line ${feedback || ''}`} role="status">{feedback === 'correct' ? t('fbCorrect') : feedback === 'wrong' ? t('fbWrong') : feedback === 'timeout' ? t('fbTimeout') : sendError ? t('tapAgain') : t('tapAnswer')}</div><div className="answer-grid">{question.options.map(entry => {
       const isCorrect = !!answerData && entry.id === answerData.correctAnswer.id;
       const isWrongPick = !!answerData && entry.id === selected && !isCorrect;
       return <button key={entry.id} className={`quiz-answer ${isCorrect ? 'answer-correct' : isWrongPick ? 'answer-wrong' : feedback ? 'answer-disabled' : ''}`} onClick={() => void answer(entry.id)} disabled={!!feedback || transitioning}><span>{entry.text}</span>{isCorrect ? <span className="state-icon">✓</span> : isWrongPick ? <span className="state-icon">×</span> : null}</button>;
