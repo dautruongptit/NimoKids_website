@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError, isAbort } from './apiClient';
 import { getTopics, type ApiTopic } from './gameApi';
+import type { LanguageMode } from '../i18n/languageMode';
 
 export type TopicsState =
   | { status: 'loading' }
@@ -8,14 +9,14 @@ export type TopicsState =
   | { status: 'ready'; topics: ApiTopic[] };
 
 /** Loads GET /topics. Returns the state plus `retry`. Only root topics are returned: a root plays its whole subtree. */
-export function useTopics(): [TopicsState, () => void] {
+export function useTopics(languageMode: LanguageMode): [TopicsState, () => void] {
   const [state, setState] = useState<TopicsState>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
     setState({ status: 'loading' });
-    getTopics(controller.signal)
+    getTopics(languageMode, controller.signal)
       .then(list => {
         const roots = list.filter(topic => !topic.parentId).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
         setState({ status: 'ready', topics: roots });
@@ -25,7 +26,7 @@ export function useTopics(): [TopicsState, () => void] {
         setState({ status: 'error', error: error instanceof ApiError ? error : new ApiError('NETWORK_ERROR', 'Could not reach the server') });
       });
     return () => controller.abort();
-  }, [attempt]);
+  }, [attempt, languageMode]);
 
   const retry = useCallback(() => setAttempt(value => value + 1), []);
   return [state, retry];

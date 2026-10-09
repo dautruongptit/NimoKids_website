@@ -1,4 +1,5 @@
 import { apiGet, apiPost } from './apiClient';
+import { loadLanguageMode, type LanguageMode } from '../i18n/languageMode';
 
 /** Mirrors the backend enum AgeGroup. */
 export type AgeGroup = 'AGE_1_3' | 'AGE_4_5';
@@ -39,7 +40,9 @@ export type ApiSession = {
   question: ApiQuestion | null;
 };
 
-export const getTopics = (signal?: AbortSignal) => apiGet<ApiTopic[]>('/topics', signal);
+/** Topic names/descriptions are served in the content language of the mode (VI = Vietnamese, EN and VI_EN = English). */
+export const getTopics = (languageMode: LanguageMode, signal?: AbortSignal) =>
+  apiGet<ApiTopic[]>(`/topics?languageMode=${languageMode}`, signal);
 
 let gameModeId: Promise<string> | null = null;
 /** The backend requires gameModeId; there is a single GUESS mode today. Fetched once and cached for the visit. */
@@ -61,7 +64,9 @@ export function getDefaultGameModeId(): Promise<string> {
  */
 export async function createSession(params: { topicId: string | null; ageGroup: AgeGroup }, signal?: AbortSignal) {
   const gameModeId = await getDefaultGameModeId();
-  return apiPost<ApiSession>('/game-sessions', { topicId: params.topicId, gameModeId, ageGroup: params.ageGroup }, signal);
+  // The language mode is read from localStorage (key nimokids_lang) at the moment of the call, so it always matches what the child chose.
+  const languageMode = loadLanguageMode();
+  return apiPost<ApiSession>('/game-sessions', { topicId: params.topicId, gameModeId, ageGroup: params.ageGroup, languageMode }, signal);
 }
 
 export type ApiAnswer = {

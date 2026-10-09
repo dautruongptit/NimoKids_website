@@ -41,3 +41,13 @@ body{margin:0}button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:tra
 @media (prefers-reduced-motion: reduce) { .loading-buddy, .error-buddy, .topic-skeleton, .loading-buddy i { animation: none; } }
 
 .start-error { margin: 14px auto 0; max-width: 560px; padding: 12px 18px; border-radius: 18px; background: #fff0f3; color: #8a2b45; font-weight: 700; text-align: center; }
+
+/* Language switcher (header) */
+.lang-switch { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255, 255, 255, .85); box-shadow: 0 2px 8px rgba(107, 56, 212, .12); }
+.lang-option { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; padding: 6px 12px; background: transparent; color: #4b3a7a; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.lang-option:hover { background: rgba(107, 56, 212, .08); }
+.lang-option.lang-active { background: #6b38d4; color: #fff; }
+.lang-option:focus-visible { outline: 3px solid #ffb703; outline-offset: 2px; }
+.lang-badge { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 999px; background: #ffe08a; color: #5a3b00; }
+.lang-active .lang-badge { background: #fff; color: #6b38d4; }
+@media (max-width: 1180px) { .lang-label, .lang-badge { display: none; } .lang-option { padding: 6px 10px; } }
