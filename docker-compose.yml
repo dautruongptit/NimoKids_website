@@ -1,0 +1,27 @@
+# NimoKids web = project 85 -> port 8500. Run from this folder:
+#   docker compose up -d --build
+#   docker compose logs -f nimokids-web
+#
+# The API is a separate compose project (repo NimoKids_API). Start it first: it creates the network "nimokids-net",
+# which this container joins so nginx can reach http://nimokids-api:8510. The browser only talks to this container
+# (same origin), so no CORS is needed. Bound to 127.0.0.1 only: Cloudflare Tunnel / reverse proxy is the way in.
+name: nimokids-web
+
+services:
+  nimokids-web:
+    build:
+      context: .
+    container_name: nimokids-web
+    restart: unless-stopped   # nginx exits if the API name does not resolve yet; Docker retries until the API is up
+    environment:
+      PORT: "8500"
+      API_UPSTREAM: ${API_UPSTREAM:-http://nimokids-api:8510}
+    ports:
+      - "127.0.0.1:8500:8500"
+    networks:
+      - nimokids-net
+
+networks:
+  nimokids-net:
+    external: true
+    name: nimokids-net
