@@ -1,7 +1,12 @@
 {
-  "description": "Engage preschoolers aged 1–5 with a fun, visually rich quiz game that teaches through playful guessing, colorful illustrations, and instant feedback.",
+  "title": "NimoKids — Little Discoveries, Big Smiles",
+  "description": "A happy little place to learn for ages 1–5. Look, listen and tap to discover animals, colors, shapes and more. No ads, no accounts.",
+  "language": "en",
   "robots": {
     "index": false
+  },
+  "customScripts": {
+    "headEnd": "<meta property=\"og:site_name\" content=\"NimoKids\" /><meta property=\"og:type\" content=\"website\" /><meta property=\"og:locale\" content=\"en_US\" />"
   },
   "accessibility": {
     "addBypassLinks": false,
