@@ -94,3 +94,4 @@ body{margin:0}button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:tra
 .nimo-footer.site-footer>.footer-grid{display:grid;align-items:start;gap:40px;max-width:1100px}.nimo-footer.site-footer>.footer-bottom{display:flex;max-width:1100px}@media(max-width:900px){.nimo-footer.site-footer>.footer-grid{gap:24px;grid-template-columns:1fr}}
 .topic-page{max-width:1180px;padding-left:40px;padding-right:40px}@media(max-width:1050px){.topic-page{padding-left:30px;padding-right:30px}}@media(max-width:760px){.topic-page{padding-left:24px;padding-right:24px}}
 .topics-sentinel{height:1px;margin:0 0 24px}
+.tap-hear small{font-size:.8em;opacity:.75;font-weight:700}

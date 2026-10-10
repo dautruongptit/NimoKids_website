@@ -15,6 +15,8 @@ import type { UiLang } from './i18n/strings';
 
 type Age = '1–3' | '4–5';
 const VOICE_LANG: Record<UiLang, string> = { en: 'en-US', vi: 'vi-VN' };
+/** Must match GameConstants.MAX_LISTEN_AGAIN on the server (which enforces it). */
+const MAX_LISTEN_AGAIN = 2;
 
 function Progress({ step }: { step: number }) {
   const { t } = useLanguage();
@@ -100,8 +102,11 @@ function NimoKids() {
   }
 
   /** "Listen again": read the question again; the countdown starts over when the voice ends (the server is told too). */
+  const [replays, setReplays] = useState<{ id: string; n: number }>({ id: '', n: 0 });
+  const replaysLeft = Math.max(0, MAX_LISTEN_AGAIN - (question && replays.id === question.id ? replays.n : 0));
   function listenAgain() {
-    if (!question || !session || locked.current || transitioning || feedback) return;
+    if (!question || !session || locked.current || transitioning || feedback || replaysLeft === 0) return;
+    setReplays(value => ({ id: question.id, n: (value.id === question.id ? value.n : 0) + 1 }));
     const run = ++voiceRun.current;
     setTimerRunning(false); setSeconds(timeLimit);
     say(question.questionText, questionLang, () => {
@@ -249,7 +254,7 @@ function NimoKids() {
 
     {screen === 'topics' && age && <TopicSelectionScreen ageLabel={age} selected={choice} onSelect={picked => { setChoice(picked); void startWith(picked); }} starting={starting} startError={startError} say={say} />}
 
-    {screen === 'quiz' && question && <main className="quiz-page"><section className={`quiz-panel ${transitioning ? 'question-transition' : ''}`}><div className="quiz-heading"><div className="quiz-progress-box"><span className="question-counter">{t('question', { n: questionNumber, total })}</span><div className="quiz-progress" aria-label={t('questionAria', { n: questionNumber, total })}>{Array.from({ length: total }, (_, position) => <span className={position < questionNumber ? 'current' : ''} key={position}>★</span>)}</div></div><h1>{question.questionText}</h1><div className="quiz-tools"><button className="tap-hear" onClick={listenAgain} disabled={!!feedback || transitioning}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" /><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></svg> {t('tapToHear')}</button><div className={`countdown ${seconds <= 2 && !feedback ? 'timer-low' : ''}`} aria-label={t('secondsAria', { n: seconds })}><span>⏱</span><strong>{seconds}</strong></div></div></div><div className={`quiz-image ${topicColor}`} key={question.id}>{questionImageSrc(question.questionImage) && <img src={questionImageSrc(question.questionImage)!} alt={t('pictureAlt')} />}<span className="image-sparkle" aria-hidden="true">✦</span></div><div className={`feedback-line ${feedback || ''}`} role="status">{feedback === 'correct' ? t('fbCorrect') : feedback === 'wrong' ? t('fbWrong') : feedback === 'timeout' ? t('fbTimeout') : sendError ? t('tapAgain') : t('tapAnswer')}</div><div className="answer-grid">{question.options.map(entry => {
+    {screen === 'quiz' && question && <main className="quiz-page"><section className={`quiz-panel ${transitioning ? 'question-transition' : ''}`}><div className="quiz-heading"><div className="quiz-progress-box"><span className="question-counter">{t('question', { n: questionNumber, total })}</span><div className="quiz-progress" aria-label={t('questionAria', { n: questionNumber, total })}>{Array.from({ length: total }, (_, position) => <span className={position < questionNumber ? 'current' : ''} key={position}>★</span>)}</div></div><h1>{question.questionText}</h1><div className="quiz-tools"><button className="tap-hear" onClick={listenAgain} disabled={!!feedback || transitioning || replaysLeft === 0}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" /><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></svg> {t('tapToHear')} <small>({replaysLeft})</small></button><div className={`countdown ${seconds <= 2 && !feedback ? 'timer-low' : ''}`} aria-label={t('secondsAria', { n: seconds })}><span>⏱</span><strong>{seconds}</strong></div></div></div><div className={`quiz-image ${topicColor}`} key={question.id}>{questionImageSrc(question.questionImage) && <img src={questionImageSrc(question.questionImage)!} alt={t('pictureAlt')} />}<span className="image-sparkle" aria-hidden="true">✦</span></div><div className={`feedback-line ${feedback || ''}`} role="status">{feedback === 'correct' ? t('fbCorrect') : feedback === 'wrong' ? t('fbWrong') : feedback === 'timeout' ? t('fbTimeout') : sendError ? t('tapAgain') : t('tapAnswer')}</div><div className="answer-grid">{question.options.map(entry => {
       const isCorrect = !!answerData && entry.id === answerData.correctAnswer.id;
       const isWrongPick = !!answerData && entry.id === selected && !isCorrect;
       return <button key={entry.id} className={`quiz-answer ${isCorrect ? 'answer-correct' : isWrongPick ? 'answer-wrong' : feedback ? 'answer-disabled' : ''}`} onClick={() => void answer(entry.id)} disabled={!!feedback || transitioning}><span>{entry.text}</span>{isCorrect ? <span className="state-icon">✓</span> : isWrongPick ? <span className="state-icon">×</span> : null}</button>;
