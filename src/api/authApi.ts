@@ -72,7 +72,9 @@ export const googleStartUrl = (returnTo: string) => `/api/v1/auth/google/start?r
 
 /** The page to return to after sign-in: only a path of this site, never another address. */
 export function safeReturnTo(value: string | null): string {
-  return value && value.startsWith('/') && !value.startsWith('//') && !value.includes('\\') ? value : '/';
+  // Browsers drop tabs/newlines inside URLs, so "/\t/evil.com" would turn into "//evil.com": refuse control characters too.
+  if (!value || /[\u0000-\u001F\u007F\\]/.test(value) || !value.startsWith('/') || value.startsWith('//')) return '/';
+  return value;
 }
 
 /** The token refreshes itself about a minute before it ends. */
