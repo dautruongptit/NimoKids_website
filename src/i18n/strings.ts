@@ -4,6 +4,8 @@ export type UiLang = 'en' | 'vi';
 const en = {
   home: 'Play', adventures: 'Adventures', safeTag: 'Toddler Safe', sound: 'Sound', on: 'ON', off: 'OFF',
   soundOnLabel: 'Turn sound on', soundOffLabel: 'Turn sound off', homeLabel: 'NimoKids home', mascotAlt: 'NimoKids mascot', mainNav: 'Main navigation',
+  bannerExplorePill: 'Explore', bannerExploreTitle: "Let's explore!", bannerExploreText: 'A world full of wonders', bannerExploreFoot: 'Happy learners',
+  bannerPlayPill: 'Fun', bannerPlayTitle: 'A little joy every day!', bannerPlayText: 'Play for fun, learn something new', bannerPlayFoot: '100% fun',
   quickGuide: 'Quick guide', stepAge: 'Choose Age', stepTopic: 'Choose Topic', stepPlay: 'Play', stepCelebrate: 'Celebrate', stepLabel: 'Step {n} of 4',
 
   homePill: '✨ A happy little place to learn', homeTitle1: 'Little discoveries.', homeTitle2: 'Big happy smiles.',
@@ -77,6 +79,8 @@ export type UiKey = keyof typeof en;
 const vi: Record<UiKey, string> = {
   home: 'Chơi', adventures: 'Khám phá', safeTag: 'An toàn cho bé', sound: 'Âm thanh', on: 'BẬT', off: 'TẮT',
   soundOnLabel: 'Bật âm thanh', soundOffLabel: 'Tắt âm thanh', homeLabel: 'Trang chủ NimoKids', mascotAlt: 'Linh vật NimoKids', mainNav: 'Điều hướng chính',
+  bannerExplorePill: 'Khám phá', bannerExploreTitle: 'Cùng bé khám phá!', bannerExploreText: 'Thế giới đầy điều kỳ diệu', bannerExploreFoot: 'Bé ngoan vui học',
+  bannerPlayPill: 'Vui vẻ', bannerPlayTitle: 'Mỗi ngày một niềm vui!', bannerPlayText: 'Chơi vui – Học điều hay', bannerPlayFoot: '100% Vui vẻ',
   quickGuide: 'Hướng dẫn nhanh', stepAge: 'Chọn tuổi', stepTopic: 'Chọn chủ đề', stepPlay: 'Chơi', stepCelebrate: 'Chúc mừng', stepLabel: 'Bước {n} trên 4',
 
   homePill: '✨ Một góc nhỏ vui vẻ để học', homeTitle1: 'Khám phá nho nhỏ.', homeTitle2: 'Nụ cười thật to.',

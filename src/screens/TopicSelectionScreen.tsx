@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MAX_TOPICS, VISIBLE_AT_FIRST, useRowsOnScroll } from './useRowsOnScroll';
 import Button from '../components/Button';
+import SideBanner from '../components/SideBanner';
 import { Hint, Icon, Speaker } from '../components/Ui';
 import { topicVisual } from '../api/topicVisuals';
 import { useTopics } from '../api/useTopics';
@@ -18,13 +19,15 @@ type Props = {
   selected: TopicChoice;
   onSelect: (choice: TopicChoice) => void;
   starting?: boolean;
+  /** The topic name has been read and the questions are still loading: show "Nimo is choosing…". */
+  waiting?: boolean;
   startError?: string | null;
   say: (text: string, lang?: UiLang) => void;
 };
 
 const OFFLINE_CODES = ['NETWORK_ERROR', 'TIMEOUT', 'HTTP_502', 'HTTP_503', 'HTTP_504'];
 
-export default function TopicSelectionScreen({ ageLabel, selected, onSelect, starting = false, startError = null, say }: Props) {
+export default function TopicSelectionScreen({ ageLabel, selected, onSelect, starting = false, waiting = false, startError = null, say }: Props) {
   const { mode, t, tl, uiLang, contentLang } = useLanguage();
   const [state, retry] = useTopics(mode);
   const [visible, setVisible] = useState(VISIBLE_AT_FIRST);
@@ -41,7 +44,8 @@ export default function TopicSelectionScreen({ ageLabel, selected, onSelect, sta
   // Topic names come from the server in the content language; the "All Topics" tile is interface text.
   const nameOf = (choice: TopicChoice) => choice.topic ? choice.topic.name : t('allTopics');
 
-  return <>
+  return <div className="topic-layout">
+    <SideBanner kind="explore" />
     <main className="topic-page">
       <section className="surprise-card" onClick={() => { if (state.status === 'ready' && !starting) onSelect(ALL_TOPICS); }}>
         <span className="surprise-badge"><Icon file="278d6" /> {t('favouriteBadge')}</span>
@@ -75,13 +79,13 @@ export default function TopicSelectionScreen({ ageLabel, selected, onSelect, sta
         {isLoading && <div className="topics-more-loading" role="status" aria-live="polite"><span className="topics-spinner" aria-hidden="true" />{t('loadingMoreTopics')}</div>}
       </>}
 
-      {starting && <StartingOverlay />}
+      {waiting && <StartingOverlay />}
       {startError && <p className="start-error" role="alert">{startMessage(startError, t)}</p>}
       <Hint><strong>{t('topicHintTitle')}</strong><p>{t('topicHintText')}</p></Hint>
       <div className="age-reminder">{t('ageReminder', { age: ageLabel })} <span>♡</span></div>
     </main>
-
-  </>;
+    <SideBanner kind="play" />
+  </div>;
 }
 
 /** Shown from the tap until the first question arrives; after 5 s it tells the child the network is slow. */

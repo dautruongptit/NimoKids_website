@@ -10,6 +10,7 @@ import { questionImageSrc } from './api/questionImage';
 import { ApiError } from './api/apiClient';
 import AccountProvider, { AccountEntry, AuthLanding, SaveProgressPrompt } from './components/AccountExperience';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import SideBanner from './components/SideBanner';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import type { UiLang } from './i18n/strings';
 
@@ -17,6 +18,12 @@ type Age = '1–3' | '4–5';
 const VOICE_LANG: Record<UiLang, string> = { en: 'en-US', vi: 'vi-VN' };
 /** Must match GameConstants.MAX_LISTEN_AGAIN on the server (which enforces it). */
 const MAX_LISTEN_AGAIN = 2;
+/** The topic name is read while the questions load; the quiz never waits longer than this for the voice. */
+const TOPIC_VOICE_MAX_MS = 2500;
+/** After a question appears, a short pause before it is read aloud. */
+const BEFORE_READING_MS = 1000;
+/** "Nimo is choosing the questions…" stays visible at least this long once the topic name has been read. */
+const WAITING_MIN_MS = 700;
 
 function Progress({ step, label }: { step: number; label?: string }) {
   const { t } = useLanguage();
@@ -24,12 +31,13 @@ function Progress({ step, label }: { step: number; label?: string }) {
 }
 
 function NimoKids() {
-  const { mode, t, tl, uiLang, questionLang } = useLanguage();
+  const { mode, t, tl, uiLang, contentLang, questionLang } = useLanguage();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const screen = pathname.slice(1) || 'home';
   const [age, setAge] = useState<Age | null>(() => { const saved = loadAgeGroup(); return saved ? toAgeLabel(saved) : null; });
   const [choice, setChoice] = useState<TopicChoice>(ALL_TOPICS);
+  const [startWaiting, setStartWaiting] = useState(false);
   const topicName = choice.topic ? choice.topic.name : t('allTopics');
   const visual = topicVisual(choice.topic?.code ?? 'ALL', 0);
   const topicEmoji = choice.topic ? visual.emoji : '🌈';
@@ -121,14 +129,30 @@ function NimoKids() {
     navigate(destination === 'home' ? '/' : `/${destination}`);
     window.scrollTo({ top: 0 });
   }
-  const start = () => startWith(choice);
-  async function startWith(picked: TopicChoice) {
+  /** "Play again" (result screen): same topic, no topic announcement, straight to the new questions. */
+  const start = () => startWith(choice, false);
+  /** `announce`: read the topic name while the questions load (the child has just picked it on the topic screen). */
+  async function startWith(picked: TopicChoice, announce = true) {
     if (!age) { go('age'); return; }
     if (starting) return;
     activateAudio();
     setStarting(true); setStartError(null);
     try {
-      const created = await createSession({ topicId: picked.topic?.id ?? null, ageGroup: toAgeGroup(age) });
+      // The topic name is read WHILE the questions load. "Nimo is choosing…" shows once the voice has ended and stays at least
+      // WAITING_MIN_MS (so it is seen even when the questions are already here); the quiz opens when both are done.
+      const loading = createSession({ topicId: picked.topic?.id ?? null, ageGroup: toAgeGroup(age) });
+      loading.catch(() => { /* handled where it is awaited below */ });
+      let created: ApiSession;
+      if (announce) {
+        await new Promise<void>(resolve => {
+          say(picked.topic ? picked.topic.name : t('allTopics'), picked.topic ? contentLang : uiLang, resolve);
+          setTimeout(resolve, TOPIC_VOICE_MAX_MS);
+        });
+        setStartWaiting(true);
+        [created] = await Promise.all([loading, new Promise<void>(resolve => setTimeout(resolve, WAITING_MIN_MS))]);
+      } else {
+        created = await loading;
+      }
       if (!created.question) throw new ApiError('BAD_RESPONSE', 'The server sent no question');
       locked.current = false;
       setSession(created); setQuestion(created.question); setQuestionNumber(created.currentQuestionNumber);
@@ -138,7 +162,7 @@ function NimoKids() {
     } catch (error) {
       setStartError(error instanceof ApiError ? error.code : 'NETWORK_ERROR');
       if (screen !== 'topics') go('topics');
-    } finally { setStarting(false); }
+    } finally { setStarting(false); setStartWaiting(false); }
   }
 
   /** Grading, score and streak are decided by the server; the UI only shows what it answers. */
@@ -199,7 +223,8 @@ function NimoKids() {
       setTimeout(resolve, 1500);
     });
     const painted = new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    void Promise.all([pictureReady, painted]).then(() => {
+    const settle = new Promise<void>(resolve => setTimeout(resolve, BEFORE_READING_MS));
+    void Promise.all([pictureReady, painted, settle]).then(() => {
       if (!active || run !== voiceRun.current) return;
       say(question.questionText, questionLang, () => {
         if (!active || run !== voiceRun.current) return;
@@ -252,13 +277,13 @@ function NimoKids() {
 
     {screen === 'age' && <main className="age-page"><div className="age-heading"><Progress step={1} label={t('quickGuide')} /><h1><Icon file="f426f" /> {t('ageTitle')} <Icon file="0a6cb" /></h1></div><div className="age-grid">{(['1–3', '4–5'] as Age[]).map((value, position) => <button key={value} className={`age-card ${position ? 'older' : 'younger'} ${age === value ? 'age-selected' : ''}`} onClick={() => { activateAudio(); setAge(value); saveAgeGroup(toAgeGroup(value)); say(t('sayChooseTopic'), uiLang); go('topics'); }} aria-pressed={age === value}><div className="age-card-top"><span className="age-label"><Icon file={position ? 'cf7a5' : '16a55'} />{value} {t('years')}</span><span className="age-symbol"><Icon file={position ? 'cc2a9' : '80a6d'} /></span></div><div className="age-photo"><img src={position ? '/assets/6cc17.png' : '/assets/07c37.png'} alt={position ? t('ageOldAlt') : t('ageYoungAlt')} /></div><h2>{position ? t('ageOldTitle') : t('ageYoungTitle')}</h2><p>{position ? t('ageOldText') : t('ageYoungText')}</p><div className="micro-pills">{(position ? t('ageOldPills') : t('ageYoungPills')).split('|').map(label => <span key={label}>{label}</span>)}</div><span className="age-cta">{t('chooseYears', { age: value })} <Icon file={position ? '2399a' : '97a6b'} /></span></button>)}</div></main>}
 
-    {screen === 'topics' && age && <TopicSelectionScreen ageLabel={age} selected={choice} onSelect={picked => { setChoice(picked); void startWith(picked); }} starting={starting} startError={startError} say={say} />}
+    {screen === 'topics' && age && <TopicSelectionScreen ageLabel={age} selected={choice} onSelect={picked => { setChoice(picked); void startWith(picked); }} starting={starting} waiting={startWaiting} startError={startError} say={say} />}
 
-    {screen === 'quiz' && question && <main className="quiz-page"><section className={`quiz-panel ${transitioning ? 'question-transition' : ''}`}><div className="quiz-heading"><div className="quiz-progress-box"><span className="question-counter">{t('question', { n: questionNumber, total })}</span><div className="quiz-progress" aria-label={t('questionAria', { n: questionNumber, total })}>{Array.from({ length: total }, (_, position) => <span className={position < questionNumber ? 'current' : ''} key={position}>★</span>)}</div></div><h1>{question.questionText}</h1><div className="quiz-tools"><button className="tap-hear" onClick={listenAgain} disabled={!!feedback || transitioning || replaysLeft === 0}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" /><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></svg> {t('tapToHear')} <small>({replaysLeft})</small></button><div className={`countdown ${seconds <= 2 && !feedback ? 'timer-low' : ''}`} aria-label={t('secondsAria', { n: seconds })}><span>⏱</span><strong>{seconds}</strong></div></div></div><div className={`quiz-image ${topicColor}`} key={question.id}>{questionImageSrc(question.questionImage) && <img src={questionImageSrc(question.questionImage)!} alt={t('pictureAlt')} />}<span className="image-sparkle" aria-hidden="true">✦</span></div><div className={`feedback-line ${feedback || ''}`} role="status">{feedback === 'correct' ? t('fbCorrect') : feedback === 'wrong' ? t('fbWrong') : feedback === 'timeout' ? t('fbTimeout') : sendError ? t('tapAgain') : t('tapAnswer')}</div><div className="answer-grid">{question.options.map(entry => {
+    {screen === 'quiz' && question && <div className="topic-layout quiz-layout"><SideBanner kind="explore" /><main className="quiz-page"><section className={`quiz-panel ${transitioning ? 'question-transition' : ''}`}><div className="quiz-heading"><div className="quiz-progress-box"><span className="question-counter">{t('question', { n: questionNumber, total })}</span><div className="quiz-progress" aria-label={t('questionAria', { n: questionNumber, total })}>{Array.from({ length: total }, (_, position) => <span className={position < questionNumber ? 'current' : ''} key={position}>★</span>)}</div></div><h1><span>{question.questionText}</span>{question.questionTextVi && <small className="question-subtitle" lang="vi">{question.questionTextVi}</small>}</h1><div className="quiz-tools"><button className="tap-hear" onClick={listenAgain} disabled={!!feedback || transitioning || replaysLeft === 0}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" /><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></svg> {t('tapToHear')} <small>({replaysLeft})</small></button><div className={`countdown ${seconds <= 2 && !feedback ? 'timer-low' : ''}`} aria-label={t('secondsAria', { n: seconds })}><span>⏱</span><strong>{seconds}</strong></div></div></div><div className={`quiz-image ${topicColor}`} key={question.id}>{questionImageSrc(question.questionImage) && <img src={questionImageSrc(question.questionImage)!} alt={t('pictureAlt')} />}<span className="image-sparkle" aria-hidden="true">✦</span></div><div className={`feedback-line ${feedback || ''}`} role="status">{feedback === 'correct' ? t('fbCorrect') : feedback === 'wrong' ? t('fbWrong') : feedback === 'timeout' ? t('fbTimeout') : sendError ? t('tapAgain') : t('tapAnswer')}</div><div className="answer-grid">{question.options.map(entry => {
       const isCorrect = !!answerData && entry.id === answerData.correctAnswer.id;
       const isWrongPick = !!answerData && entry.id === selected && !isCorrect;
       return <button key={entry.id} className={`quiz-answer ${isCorrect ? 'answer-correct' : isWrongPick ? 'answer-wrong' : feedback ? 'answer-disabled' : ''}`} onClick={() => void answer(entry.id)} disabled={!!feedback || transitioning}><span>{entry.text}</span>{isCorrect ? <span className="state-icon">✓</span> : isWrongPick ? <span className="state-icon">×</span> : null}</button>;
-    })}</div>{feedback === 'correct' && <div className="celebration-sparkles" aria-hidden="true">✦　 ✧　 ✦　 ✧　 ✦</div>}</section><Hint><strong>{feedback === 'correct' ? t('quizHintCorrect') : feedback ? t('quizHintAnswered') : t('quizHintIdle')}</strong><p>{feedback ? t('quizHint2Answered') : t('quizHint2Idle')}</p></Hint></main>}
+    })}</div>{feedback === 'correct' && <div className="celebration-sparkles" aria-hidden="true">✦　 ✧　 ✦　 ✧　 ✦</div>}</section><Hint><strong>{feedback === 'correct' ? t('quizHintCorrect') : feedback ? t('quizHintAnswered') : t('quizHintIdle')}</strong><p>{feedback ? t('quizHint2Answered') : t('quizHint2Idle')}</p></Hint></main><SideBanner kind="play" /></div>}
 
     {screen === 'result' && <main className="result-page"><Progress step={4} /><section className="result-panel"><span className="welcome-pill">{t('resultPill')}</span><div className="reward-picture"><span>✦</span><span role="img" aria-label={t('trophy')}>🏆</span><span>✧</span></div><h1>{t('greatJob')}</h1><p>{t('resultText')}</p><div className="reward-stars" aria-label={t('starsLabel', { n: score })}>{Array.from({ length: total }, (_, position) => <span className={position < score ? 'earned' : ''} key={position}>★</span>)}</div><div className="final-score">{score}<span> / {total}</span></div><div className="result-stats"><div><span>{t('accuracy')}</span><strong>{Math.round(result?.accuracy ?? 0)}%</strong></div><div><span>{t('bestStreak')}</span><strong>{result?.maxStreak ?? 0}</strong></div><div><span>{t('currentStreak')}</span><strong>{result?.currentStreak ?? 0}</strong></div></div><Button onClick={start}>{t('playAgain')}</Button><div className="result-actions"><Button variant="blue" onClick={() => go('home')}>{t('homeButton')}</Button><Button variant="lavender" onClick={share}>{t('share')}</Button></div><p className="replay-note">{topicEmoji} {t('replayNote', { topic: topicName, age: age ?? '' })}</p><p className="share-message" role="status">{shareMessage}</p></section></main>}
 

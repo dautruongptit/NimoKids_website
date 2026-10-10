@@ -25,6 +25,8 @@ export type ApiOption = { id: string; text: string; image: string | null; voice:
 export type ApiQuestion = {
   id: string;
   questionText: string;
+  /** Vietnamese text of the question, a subtitle in the "learn English" mode; null otherwise. */
+  questionTextVi?: string | null;
   questionVoice: string | null;
   objectSound: string | null;
   questionImage: string | null;

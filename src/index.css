@@ -106,3 +106,48 @@ body{margin:0}button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:tra
 .topic-page .friendly-hint{margin-top:48px}@media(max-width:700px){.topic-page .friendly-hint{margin-top:32px}}
 .topic-page{padding-bottom:12px;margin-bottom:0}.topic-page .age-reminder{margin-top:16px;margin-bottom:0}.topics-sentinel{margin-bottom:0}
 .site-footer .footer-badges{flex-direction:column;align-items:flex-start;gap:10px}
+.quiz-heading h1{display:flex;flex-direction:column;align-items:center;gap:2px}.quiz-heading .question-subtitle{font-family:'Quicksand:SemiBold',sans-serif;font-size:16px;line-height:22px;font-weight:600;letter-spacing:0;color:var(--body);opacity:.85}
+
+/* Topic page side banners: shown only from 1440 px, where the topic cards still keep a comfortable width. */
+.topic-layout{display:block}
+.side-banner{display:none}
+@media(min-width:1440px){
+  .topic-layout{display:grid;grid-template-columns:clamp(230px,calc(24vw - 120px),390px) minmax(0,1180px) clamp(230px,calc(24vw - 120px),390px);justify-content:center;column-gap:24px;padding:0 24px;align-items:start}
+  .topic-layout>.topic-page,.topic-layout>.quiz-page{margin:0 auto;width:100%;min-width:0}
+  .quiz-layout .side-banner-art{animation:none}
+  .side-banner{display:flex;flex-direction:column;align-items:center;gap:10px;position:sticky;top:104px;margin-top:28px;padding:26px 20px 20px;gap:14px;border-radius:40px;background:#fff;border:4px solid #F1F5F9;box-shadow:0 8px 0 0 #E2E8F0;text-align:center;pointer-events:none;user-select:none}
+  .side-banner-pill{border-radius:999px;padding:7px 16px;font-family:'Quicksand:Bold',sans-serif;font-size:clamp(14px,1vw,17px);background:var(--pink-soft);color:var(--primary-dark)}
+  .side-banner h2{font-size:clamp(24px,2.1vw,38px);line-height:1.2;color:var(--primary-dark)}
+  .side-banner p{font-family:'Quicksand:SemiBold',sans-serif;font-size:clamp(14px,1.05vw,18px);line-height:1.4;color:var(--body)}
+  .side-banner-art{width:100%;border-radius:24px;background-repeat:no-repeat;background-size:cover;background-position:center;background-color:var(--cream);box-shadow:inset 0 0 0 3px #FFFFFF99}
+  .side-banner-foot{width:100%;border-radius:999px;padding:12px 10px;font-family:'Quicksand:Bold',sans-serif;font-size:clamp(14px,1vw,17px);background:var(--yellow);color:var(--body);box-shadow:0 4px 0 0 #F9BD22}
+  .side-banner-explore h2{color:var(--primary-dark)}
+  .side-banner-play h2{color:var(--purple)}
+  .side-banner-play .side-banner-pill{background:var(--lavender);color:var(--purple-dark)}
+  /* Vector artwork drawn for NimoKids (crisp at any size, a few KB). */
+  .side-banner-explore .side-banner-art{background-image:url(/assets/banner-explore.png)}
+  /* 3D picture supplied by the owner (457x612); a little zoom hides the thin frame at its edges. */
+  .side-banner-play .side-banner-art{background-image:url(/assets/banner-play.png)}
+  /* Both pictures are 3D artwork supplied by the owner (about 3:4). Same frame for both so the two banners are the same size;
+     a little zoom hides the thin frame at the edges of the source images. */
+  .side-banner-art{aspect-ratio:3/4;background-size:105% auto;background-position:center}
+  .side-banner h2{min-height:3.6em;display:flex;align-items:center;justify-content:center}
+  .side-banner p{min-height:2.8em;display:flex;align-items:center;justify-content:center}
+}
+@media(min-width:1440px) and (prefers-reduced-motion:no-preference){
+  .side-banner-art{animation:banner-float 6s ease-in-out infinite}
+  @keyframes banner-float{50%{transform:translateY(-4px)}}
+}
+.topics-more-loading{padding-top:36px;margin:0 0 28px;gap:14px;font-size:18px}
+.topics-spinner{flex:none;width:30px;height:30px;border:5px solid var(--pink-soft);border-top-color:var(--primary);border-right-color:var(--primary)}
+@media(min-width:1440px){.side-banner-foot{min-height:3em;display:flex;align-items:center;justify-content:center;box-sizing:border-box}}
+/* "Chơi ngay!": a gentle pulse and a shine that sweeps across, to invite a tap (the 3D extrusion shadow is left untouched). */
+.surprise-cta{position:relative;overflow:hidden;isolation:isolate}
+.surprise-cta::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(105deg,transparent,#FFFFFF8C,transparent);transform:skewX(-20deg);pointer-events:none}
+@media(prefers-reduced-motion:no-preference){
+  .surprise-cta:not(:disabled){animation:cta-pulse 2.4s ease-in-out infinite}
+  .surprise-cta:not(:disabled)::after{animation:cta-shine 2.4s ease-in-out infinite}
+  .surprise-card:hover .surprise-cta{animation-play-state:paused}
+}
+@keyframes cta-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes cta-shine{0%,55%{left:-60%}100%{left:130%}}

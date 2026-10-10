@@ -3,7 +3,8 @@
  *
  *  EN     full English                                   (backlog: not offered in the UI yet, see `enabled`)
  *  VI     full Vietnamese: interface, questions, answers
- *  VI_EN  "learn English" (recommended): Vietnamese interface and Vietnamese questions, English answers
+ *  VI_EN  "learn English" (recommended): Vietnamese interface, English questions and answers, with the Vietnamese
+ *         question shown as a subtitle under the English one
  *
  * The mode is kept in localStorage (`nimokids_lang`) and sent to the backend with POST /game-sessions.
  */
@@ -58,5 +59,5 @@ export function loadLanguageMode(): LanguageMode {
 export const uiLanguage = (mode: LanguageMode): 'en' | 'vi' => (mode === 'EN' ? 'en' : 'vi');
 /** Language of topic names and of the answer words as served by the backend (VI = Vietnamese, EN and VI_EN = English). */
 export const contentLanguage = (mode: LanguageMode): 'en' | 'vi' => (mode === 'VI' ? 'vi' : 'en');
-/** Language of the question and of the feedback (the "template" side): Vietnamese for VI and VI_EN. */
-export const questionLanguage = (mode: LanguageMode): 'en' | 'vi' => (mode === 'EN' ? 'en' : 'vi');
+/** Language of the question and of the feedback (the "template" side): Vietnamese for VI only; EN and VI_EN ask in English. */
+export const questionLanguage = (mode: LanguageMode): 'en' | 'vi' => (mode === 'VI' ? 'vi' : 'en');
