@@ -99,8 +99,9 @@ export type ApiResult = {
 const sessionPath = (sessionId: string, action: string) => `/game-sessions/${sessionId}/${action}`;
 
 /** Tell the server the question audio ended: the 8 s countdown starts now. Best effort: the server has a capped fallback. */
-export const startTimer = (sessionId: string, questionId: string) =>
-  apiPost<null>(sessionPath(sessionId, 'timer-start'), { questionId });
+/** `restart` = the child pressed "Listen again": the countdown starts over from this moment. */
+export const startTimer = (sessionId: string, questionId: string, restart = false) =>
+  apiPost<null>(sessionPath(sessionId, 'timer-start'), restart ? { questionId, restart: true } : { questionId });
 
 export const submitAnswer = (sessionId: string, questionId: string, selectedOptionId: string) =>
   apiPost<ApiAnswer>(sessionPath(sessionId, 'submit-answer'), { questionId, selectedOptionId });

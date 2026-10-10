@@ -64,9 +64,9 @@ export function getAnonymousId(): string {
   }
 }
 
-type RequestOptions = { method?: 'GET' | 'POST'; body?: unknown; signal?: AbortSignal };
+type RequestOptions = { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown; signal?: AbortSignal; headers?: Record<string, string> };
 
-export async function request<T>(path: string, { method = 'GET', body, signal }: RequestOptions = {}): Promise<T> {
+export async function request<T>(path: string, { method = 'GET', body, signal, headers: extraHeaders }: RequestOptions = {}): Promise<T> {
   const controller = new AbortController();
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, TIMEOUT_MS);
@@ -80,10 +80,13 @@ export async function request<T>(path: string, { method = 'GET', body, signal }:
         Accept: 'application/json',
         [ANONYMOUS_ID_HEADER]: getAnonymousId(),
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...extraHeaders,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
+
+    if (response.status === 204) return undefined as T;   // logout / revoke answer with no body
 
     let envelope: Envelope<T> | null = null;
     try { envelope = (await response.json()) as Envelope<T>; } catch { /* not JSON (proxy error page, 502 ...) */ }

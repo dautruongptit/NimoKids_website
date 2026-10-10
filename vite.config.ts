@@ -32,7 +32,7 @@ react(),
     },
     server: {
       host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
-      port: parseInt(process.env.PORT || '8443'),
+      port: parseInt(process.env.PORT || '8500'),
       strictPort: true,
       // Backend (Spring Boot, project 85 -> 8510). The app uses relative URLs (/api/v1/...), like nginx in Docker.
       proxy: { '/api': { target: process.env.VITE_API_PROXY || 'http://localhost:8510', changeOrigin: true } },
@@ -44,7 +44,7 @@ react(),
     },
     preview: {
       host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
-      port: parseInt(process.env.PORT || '8443'),
+      port: parseInt(process.env.PORT || '8500'),
     },
   }
 })

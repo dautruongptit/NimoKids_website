@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Button from '../components/Button';
 import { Hint, Icon, Speaker } from '../components/Ui';
 import { topicVisual } from '../api/topicVisuals';
@@ -16,45 +16,87 @@ type Props = {
   ageLabel: string;
   selected: TopicChoice;
   onSelect: (choice: TopicChoice) => void;
-  onBack: () => void;
-  onStart: () => void;
   starting?: boolean;
   startError?: string | null;
   say: (text: string, lang?: UiLang) => void;
 };
 
-const VISIBLE_AT_FIRST = 10;
+/** 3 rows of 4 first; one more row each time the child scrolls near the end. */
+const VISIBLE_AT_FIRST = 12;
+const LOAD_STEP = 4;
 const OFFLINE_CODES = ['NETWORK_ERROR', 'TIMEOUT', 'HTTP_502', 'HTTP_503', 'HTTP_504'];
 
-export default function TopicSelectionScreen({ ageLabel, selected, onSelect, onBack, onStart, starting = false, startError = null, say }: Props) {
+export default function TopicSelectionScreen({ ageLabel, selected, onSelect, starting = false, startError = null, say }: Props) {
   const { mode, t, tl, uiLang, contentLang } = useLanguage();
   const [state, retry] = useTopics(mode);
-  const [expanded, setExpanded] = useState(false);
+  const [visible, setVisible] = useState(VISIBLE_AT_FIRST);
+  const sentinel = useRef<HTMLDivElement>(null);
 
   const choices: TopicChoice[] = state.status === 'ready'
-    ? [ALL_TOPICS, ...state.topics.map(topic => ({ key: topic.id, topic }))]
+    ? state.topics.map(topic => ({ key: topic.id, topic }))
     : [];
-  const shown = expanded ? choices : choices.slice(0, VISIBLE_AT_FIRST);
-  const selectedVisual = topicVisual(selected.topic?.code ?? 'ALL', 0);
+  const shown = choices.slice(0, visible);
+  const hasMore = visible < choices.length;
+
+  // Scrolling down to the end of the list adds one row; scrolling back up hides a row again once it has left the screen.
+  // Only real scrolling counts (wheel, swipe, keys, scrollbar): scroll events the page makes by itself (layout shifts,
+  // scroll restoration) are ignored, and a short pause between rows stops a fast wheel spin from changing everything.
+  useEffect(() => {
+    let last = 0;
+    let touched = 0;
+    let lastY = window.scrollY;
+    const touch = () => { touched = Date.now(); };
+    const onScroll = () => {
+      const y = window.scrollY;
+      const down = y > lastY;
+      lastY = y;
+      const now = Date.now();
+      if (now - touched > 1000 || now - last < 350) return;
+      if (down) {
+        const node = sentinel.current;
+        if (!node || node.getBoundingClientRect().top > window.innerHeight - 40) return;
+        last = now;
+        setVisible(value => value + LOAD_STEP);
+      } else if (visible > VISIBLE_AT_FIRST) {
+        const tiles = document.querySelectorAll('.topic-cards .topic-tile');
+        const lastTile = tiles[tiles.length - 1];
+        if (!lastTile || lastTile.getBoundingClientRect().top < window.innerHeight) return;
+        last = now;
+        setVisible(value => Math.max(VISIBLE_AT_FIRST, value - LOAD_STEP));
+      }
+    };
+    const inputs = ['wheel', 'touchmove', 'keydown', 'mousedown'] as const;
+    inputs.forEach(name => window.addEventListener(name, touch, { passive: true }));
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      inputs.forEach(name => window.removeEventListener(name, touch));
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [visible]);
   // Topic names come from the server in the content language; the "All Topics" tile is interface text.
   const nameOf = (choice: TopicChoice) => choice.topic ? choice.topic.name : t('allTopics');
 
   return <>
     <main className="topic-page">
-      <div className="screen-top"><Button variant="blue" className="back-button" onClick={onBack}><Icon file="17a18" /> {t('back')}</Button><span className="step-label"><Icon file="1595a" /> {t('topicStep')}</span></div>
-      <section className="prompt-banner"><div className="prompt-group"><Speaker large onClick={() => say(t('sayTopicGuide'), uiLang)} label={t('listenGuide')} /><div><h1>{t('topicTitle')}</h1><p>{tl('topicText')}</p></div></div><span className="preschool-pill"><Icon file="98042" /> {tl('preschoolPill')}</span></section>
+      <section className="surprise-card" onClick={() => { if (state.status === 'ready' && !starting) onSelect(ALL_TOPICS); }}>
+        <span className="surprise-badge"><Icon file="278d6" /> {t('favouriteBadge')}</span>
+        <span className="surprise-dice" role="img" aria-label={t('allTopics')}>🎲</span>
+        <div className="surprise-copy"><h1>🌈 {t('allTopicsTitle')} <small>({t('surpriseHint')})</small></h1><p>{t('surpriseDesc')}</p></div>
+        <Button className="surprise-cta" disabled={state.status !== 'ready' || starting}>{t('playSurprise')} 🎲 <span>▷</span></Button>
+      </section>
+      {state.status === 'ready' && <h2 className="pick-heading"><span><i aria-hidden="true" />{t('orPickOne')}</span><em>{t('wonderTopics', { n: choices.length })}</em></h2>}
 
       {state.status === 'loading' && <TopicsLoading />}
       {state.status === 'error' && <TopicsError code={state.error.code} onRetry={retry} />}
 
       {state.status === 'ready' && <>
-        <div className="topic-cards">{shown.map((choice, position) => {
+        <div className={`topic-cards ${starting ? 'topics-busy' : ''}`}>{shown.map((choice, position) => {
           const isAll = choice.topic === null;
           const visual = topicVisual(choice.topic?.code ?? 'ALL', position);
           const active = selected.key === choice.key;
           const name = nameOf(choice);
           return <article key={choice.key} className={`topic-tile ${isAll ? 'all-topics' : ''} ${active ? 'topic-selected' : ''}`}>
-            <button className="topic-select" aria-pressed={active} onClick={() => { onSelect(choice); if (isAll) say(t('saySurprise'), uiLang); else say(name, contentLang); }}>
+            <button className="topic-select" aria-pressed={active} disabled={starting} onClick={() => { onSelect(choice); }}>
               <span className="question-pill">{t('fiveQuestions')}</span>
               {isAll && <span className="surprise-tag"><Icon file="278d6" /> {t('surprise')}</span>}
               <div className={`topic-picture ${isAll ? 'pink' : visual.color}`}>{visual.image ? <img src={visual.image} alt={name} /> : <span role="img" aria-label={name}>{isAll ? '🌈' : visual.emoji}</span>}</div>
@@ -64,19 +106,36 @@ export default function TopicSelectionScreen({ ageLabel, selected, onSelect, onB
             <Speaker label={t('hear', { name })} onClick={() => say(name, isAll ? uiLang : contentLang)} />
           </article>;
         })}</div>
-        {choices.length > VISIBLE_AT_FIRST && <Button variant="blue" className="more-topics" onClick={() => setExpanded(value => !value)}>{expanded ? t('fewerWorlds') : t('moreWorlds')}</Button>}
+        {hasMore && <div ref={sentinel} className="topics-sentinel" aria-hidden="true" />}
       </>}
 
+      {starting && <StartingOverlay />}
       {startError && <p className="start-error" role="alert">{startMessage(startError, t)}</p>}
       <Hint><strong>{t('topicHintTitle')}</strong><p>{t('topicHintText')}</p></Hint>
       <div className="age-reminder">{t('ageReminder', { age: ageLabel })} <span>♡</span></div>
     </main>
 
-    <div className="play-dock"><div className="dock-inner">
-      <div className="selected-topic"><span>{selected.topic ? selectedVisual.emoji : '🌈'}</span><div><small>{t('selectedTopic')}</small><strong>{nameOf(selected)}</strong></div></div>
-      <Button onClick={onStart} disabled={state.status !== 'ready' || starting}>{starting ? t('gettingReady') : <>{t('letsPlay')} <span>▷</span></>}</Button>
-    </div></div>
   </>;
+}
+
+/** Shown from the tap until the first question arrives; after 5 s it tells the child the network is slow. */
+function StartingOverlay() {
+  const { t } = useLanguage();
+  const [slow, setSlow] = useState(false);
+  const [lit, setLit] = useState(0);
+  useEffect(() => {
+    const slowTimer = setTimeout(() => setSlow(true), 5000);
+    const stars = setInterval(() => setLit(value => (value + 1) % 6), 450);
+    return () => { clearTimeout(slowTimer); clearInterval(stars); };
+  }, []);
+  return <div className="starting-overlay" role="status" aria-live="polite">
+    <div className="starting-card">
+      <div className="loading-buddy" aria-hidden="true"><span>🧸</span><i>✦</i><i>✧</i><i>✦</i></div>
+      <h2>{t('loadingQuestions')}</h2>
+      <div className="starting-stars" aria-hidden="true">{Array.from({ length: 5 }, (_, position) => <span key={position} className={position < lit ? 'lit' : ''}>★</span>)}</div>
+      <p className={slow ? 'starting-slow' : 'starting-slow starting-hidden'}>{t('loadingSlow')}</p>
+    </div>
+  </div>;
 }
 
 function TopicsLoading() {
