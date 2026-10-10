@@ -29,10 +29,9 @@ export function isLanguageMode(value: unknown): value is LanguageMode {
   return value === 'EN' || value === 'VI' || value === 'VI_EN';
 }
 
-/** Browser locale -> default mode: Vietnamese (vi, vi-VN ...) starts as VI_EN, everyone else as EN. */
+/** First visit: always "learn English" (VI_EN). The choice is then kept in localStorage; a stored choice wins. */
 export function detectLanguageMode(): LanguageMode {
-  const locale = (typeof navigator !== 'undefined' && (navigator.language || navigator.languages?.[0])) || '';
-  return /^vi(-|_|$)/i.test(locale) ? 'VI_EN' : 'EN';
+  return 'VI_EN';
 }
 
 function readStored(): LanguageMode | null {

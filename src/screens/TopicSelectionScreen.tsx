@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { MAX_TOPICS, VISIBLE_AT_FIRST, useRowsOnScroll } from './useRowsOnScroll';
 import Button from '../components/Button';
 import { Hint, Icon, Speaker } from '../components/Ui';
 import { topicVisual } from '../api/topicVisuals';
@@ -21,58 +22,22 @@ type Props = {
   say: (text: string, lang?: UiLang) => void;
 };
 
-/** 3 rows of 4 first; one more row each time the child scrolls near the end. */
-const VISIBLE_AT_FIRST = 12;
-const LOAD_STEP = 4;
 const OFFLINE_CODES = ['NETWORK_ERROR', 'TIMEOUT', 'HTTP_502', 'HTTP_503', 'HTTP_504'];
 
 export default function TopicSelectionScreen({ ageLabel, selected, onSelect, starting = false, startError = null, say }: Props) {
   const { mode, t, tl, uiLang, contentLang } = useLanguage();
   const [state, retry] = useTopics(mode);
   const [visible, setVisible] = useState(VISIBLE_AT_FIRST);
+  const [isLoading, setIsLoading] = useState(false);
   const sentinel = useRef<HTMLDivElement>(null);
 
   const choices: TopicChoice[] = state.status === 'ready'
-    ? state.topics.map(topic => ({ key: topic.id, topic }))
+    ? state.topics.slice(0, MAX_TOPICS).map(topic => ({ key: topic.id, topic }))
     : [];
   const shown = choices.slice(0, visible);
   const hasMore = visible < choices.length;
 
-  // Scrolling down to the end of the list adds one row; scrolling back up hides a row again once it has left the screen.
-  // Only real scrolling counts (wheel, swipe, keys, scrollbar): scroll events the page makes by itself (layout shifts,
-  // scroll restoration) are ignored, and a short pause between rows stops a fast wheel spin from changing everything.
-  useEffect(() => {
-    let last = 0;
-    let touched = 0;
-    let lastY = window.scrollY;
-    const touch = () => { touched = Date.now(); };
-    const onScroll = () => {
-      const y = window.scrollY;
-      const down = y > lastY;
-      lastY = y;
-      const now = Date.now();
-      if (now - touched > 1000 || now - last < 350) return;
-      if (down) {
-        const node = sentinel.current;
-        if (!node || node.getBoundingClientRect().top > window.innerHeight - 40) return;
-        last = now;
-        setVisible(value => value + LOAD_STEP);
-      } else if (visible > VISIBLE_AT_FIRST) {
-        const tiles = document.querySelectorAll('.topic-cards .topic-tile');
-        const lastTile = tiles[tiles.length - 1];
-        if (!lastTile || lastTile.getBoundingClientRect().top < window.innerHeight) return;
-        last = now;
-        setVisible(value => Math.max(VISIBLE_AT_FIRST, value - LOAD_STEP));
-      }
-    };
-    const inputs = ['wheel', 'touchmove', 'keydown', 'mousedown'] as const;
-    inputs.forEach(name => window.addEventListener(name, touch, { passive: true }));
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      inputs.forEach(name => window.removeEventListener(name, touch));
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, [visible]);
+  useRowsOnScroll({ sentinel, total: choices.length, visible, setVisible, isLoading, setIsLoading });
   // Topic names come from the server in the content language; the "All Topics" tile is interface text.
   const nameOf = (choice: TopicChoice) => choice.topic ? choice.topic.name : t('allTopics');
 
@@ -107,6 +72,7 @@ export default function TopicSelectionScreen({ ageLabel, selected, onSelect, sta
           </article>;
         })}</div>
         {hasMore && <div ref={sentinel} className="topics-sentinel" aria-hidden="true" />}
+        {isLoading && <div className="topics-more-loading" role="status" aria-live="polite"><span className="topics-spinner" aria-hidden="true" />{t('loadingMoreTopics')}</div>}
       </>}
 
       {starting && <StartingOverlay />}

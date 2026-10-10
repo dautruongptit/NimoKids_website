@@ -95,3 +95,14 @@ body{margin:0}button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:tra
 .topic-page{max-width:1180px;padding-left:40px;padding-right:40px}@media(max-width:1050px){.topic-page{padding-left:30px;padding-right:30px}}@media(max-width:760px){.topic-page{padding-left:24px;padding-right:24px}}
 .topics-sentinel{height:1px;margin:0 0 24px}
 .tap-hear small{font-size:.8em;opacity:.75;font-weight:700}
+
+.topics-more-loading{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 24px;color:var(--primary-dark);font-family:'Quicksand:Bold',sans-serif;font-size:16px}
+.topics-spinner{width:26px;height:26px;border-radius:50%;border:4px solid #F0F2FF;border-top-color:var(--primary);animation:topics-spin .8s linear infinite}
+@keyframes topics-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.topics-spinner{animation-duration:2.4s}}
+
+.stepper-label{color:var(--primary-dark);font-family:'Quicksand:Bold',sans-serif;white-space:nowrap}
+.age-heading .stepper{margin:0 0 18px;font-size:16px}.age-heading .stepper .active i{width:28px;height:28px;font-size:14px}.age-heading .stepper-label{margin-right:4px}
+.topic-page .friendly-hint{margin-top:48px}@media(max-width:700px){.topic-page .friendly-hint{margin-top:32px}}
+.topic-page{padding-bottom:12px;margin-bottom:0}.topic-page .age-reminder{margin-top:16px;margin-bottom:0}.topics-sentinel{margin-bottom:0}
+.site-footer .footer-badges{flex-direction:column;align-items:flex-start;gap:10px}

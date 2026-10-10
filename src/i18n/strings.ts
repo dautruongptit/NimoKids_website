@@ -4,7 +4,7 @@ export type UiLang = 'en' | 'vi';
 const en = {
   home: 'Play', adventures: 'Adventures', safeTag: 'Toddler Safe', sound: 'Sound', on: 'ON', off: 'OFF',
   soundOnLabel: 'Turn sound on', soundOffLabel: 'Turn sound off', homeLabel: 'NimoKids home', mascotAlt: 'NimoKids mascot', mainNav: 'Main navigation',
-  stepAge: 'Choose Age', stepTopic: 'Choose Topic', stepPlay: 'Play', stepCelebrate: 'Celebrate', stepLabel: 'Step {n} of 4',
+  quickGuide: 'Quick guide', stepAge: 'Choose Age', stepTopic: 'Choose Topic', stepPlay: 'Play', stepCelebrate: 'Celebrate', stepLabel: 'Step {n} of 4',
 
   homePill: '✨ A happy little place to learn', homeTitle1: 'Little discoveries.', homeTitle2: 'Big happy smiles.',
   homeText: 'Look, listen, and play your way into a world of wonder.\nA little adventure made just for your little one.',
@@ -29,7 +29,7 @@ const en = {
   moreWorlds: 'More little worlds ↓', fewerWorlds: 'Fewer little worlds ↑', topicHintTitle: 'No pressure, just exploration!',
   topicHintText: "Every answer is a new discovery. Let's see what we can learn!", ageReminder: 'Made for your {age}-year-old explorer',
   letsPlay: "Let's Play! 🚀", gettingReady: 'Getting ready… ✨', tapToHear: 'Listen again', logoTagline: 'PLAY & LEARN', scoreLabel: 'Correct answers', allTopicsTitle: 'All Topics', surpriseHint: 'Surprise me!', favouriteBadge: 'Loved by kids the most!', surpriseDesc: 'A surprise spin! Random mix of animals, colors and fruits, no thinking needed!', playSurprise: 'Play a Surprise Now!', orPickOne: 'Or pick one kids like:', wonderTopics: '{n} wonderful topics', loadingQuestions: 'Nimo is picking your questions…', loadingSlow: 'The internet is a little slow. Nimo is still trying…',
-  topicsLoading: 'Finding happy little worlds…', errTitle: "Oops! Let's try again",
+  loadingMoreTopics: 'Loading more topics…', topicsLoading: 'Finding happy little worlds…', errTitle: "Oops! Let's try again",
   errOffline: 'The little worlds are a bit shy right now. Check the internet and try again.',
   errServer: 'Something went wrong on our side. Please try again in a moment.', tryAgain: 'Try again 🔄',
   startNotReady: "This little world isn't ready to play yet. Please pick another one!", startLost: "That round ended early. Let's start a new one!",
@@ -77,7 +77,7 @@ export type UiKey = keyof typeof en;
 const vi: Record<UiKey, string> = {
   home: 'Chơi', adventures: 'Khám phá', safeTag: 'An toàn cho bé', sound: 'Âm thanh', on: 'BẬT', off: 'TẮT',
   soundOnLabel: 'Bật âm thanh', soundOffLabel: 'Tắt âm thanh', homeLabel: 'Trang chủ NimoKids', mascotAlt: 'Linh vật NimoKids', mainNav: 'Điều hướng chính',
-  stepAge: 'Chọn tuổi', stepTopic: 'Chọn chủ đề', stepPlay: 'Chơi', stepCelebrate: 'Chúc mừng', stepLabel: 'Bước {n} trên 4',
+  quickGuide: 'Hướng dẫn nhanh', stepAge: 'Chọn tuổi', stepTopic: 'Chọn chủ đề', stepPlay: 'Chơi', stepCelebrate: 'Chúc mừng', stepLabel: 'Bước {n} trên 4',
 
   homePill: '✨ Một góc nhỏ vui vẻ để học', homeTitle1: 'Khám phá nho nhỏ.', homeTitle2: 'Nụ cười thật to.',
   homeText: 'Nhìn, nghe và chơi để bước vào thế giới diệu kỳ.\nMột cuộc phiêu lưu nhỏ dành riêng cho bé yêu của bạn.',
@@ -102,7 +102,7 @@ const vi: Record<UiKey, string> = {
   moreWorlds: 'Thêm thế giới nhỏ ↓', fewerWorlds: 'Ít thế giới nhỏ hơn ↑', topicHintTitle: 'Không áp lực, chỉ khám phá!',
   topicHintText: 'Mỗi câu trả lời là một khám phá mới. Cùng xem con học được gì nhé!', ageReminder: 'Dành cho nhà thám hiểm {age} tuổi của bạn',
   letsPlay: 'Chơi nào! 🚀', gettingReady: 'Đang chuẩn bị… ✨', tapToHear: 'Nghe lại', logoTagline: 'CHƠI & HỌC', scoreLabel: 'Câu trả lời đúng', allTopicsTitle: 'Tất Cả Chủ Đề', surpriseHint: 'Surprise me!', favouriteBadge: 'Được các bé yêu thích nhất!', surpriseDesc: 'Vòng quay bất ngờ! Trộn ngẫu nhiên câu đố động vật, màu sắc, trái cây siêu vui mà không cần suy nghĩ!', playSurprise: 'Chơi Ngay!', orPickOne: 'Hoặc chọn một bài bé thích:', wonderTopics: '{n} chủ đề kỳ diệu', loadingQuestions: 'Nimo đang chọn câu hỏi cho con…', loadingSlow: 'Mạng hơi chậm, Nimo vẫn đang cố gắng…',
-  topicsLoading: 'Đang tìm những thế giới nhỏ vui vẻ…', errTitle: 'Ôi! Mình thử lại nhé',
+  loadingMoreTopics: 'Đang tải thêm chủ đề...', topicsLoading: 'Đang tìm những thế giới nhỏ vui vẻ…', errTitle: 'Ôi! Mình thử lại nhé',
   errOffline: 'Các thế giới nhỏ đang hơi ngại. Hãy kiểm tra internet rồi thử lại.',
   errServer: 'Có điều gì đó chưa ổn từ phía chúng mình. Vui lòng thử lại sau ít phút.', tryAgain: 'Thử lại 🔄',
   startNotReady: 'Thế giới nhỏ này chưa sẵn sàng để chơi. Con chọn thế giới khác nhé!', startLost: 'Lượt chơi vừa rồi đã kết thúc sớm. Mình bắt đầu lượt mới nhé!',
