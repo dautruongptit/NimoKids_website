@@ -22,6 +22,10 @@ export type ApiTopic = {
 export type ApiGameMode = { id: string; code: string; name: string; description: string | null };
 
 export type ApiOption = { id: string; text: string; image: string | null; voice: string | null };
+
+/** Structured visual for dynamic questions (e.g. HOW_MANY): the backend decides the count and the object. */
+export type ApiQuestionVisual = { type: string; objectImage: string; count: number };
+
 export type ApiQuestion = {
   id: string;
   questionText: string;
@@ -30,6 +34,8 @@ export type ApiQuestion = {
   questionVoice: string | null;
   objectSound: string | null;
   questionImage: string | null;
+  /** Present for dynamic questions (COUNTING_OBJECTS); null for ordinary questions. */
+  visual: ApiQuestionVisual | null;
   options: ApiOption[];
 };
 export type ApiSession = {

@@ -182,6 +182,18 @@ export default function AccountProvider({ children }: { children: ReactNode }) {
   useEffect(() => () => { if (toastTimeout.current) clearTimeout(toastTimeout.current); if (refreshTimer.current) clearTimeout(refreshTimer.current); }, []);
 
   const open = useCallback((next: Dialog = 'intro') => { lastFocus.current = document.activeElement as HTMLElement; setDialog(next); }, []);
+
+  /**
+   * The Sign in button. If the page was loaded while the server was down or still starting, the first check failed and
+   * Google looked "unavailable" for good: ask the server again now, so a restart of the API is enough.
+   */
+  const openAccount = useCallback(() => {
+    if (available) { open('intro'); return; }
+    lastFocus.current = document.activeElement as HTMLElement;
+    probeSession()
+      .then(probe => { setAvailable(probe.googleEnabled); open(probe.googleEnabled ? 'intro' : 'unavailable'); })
+      .catch(() => open('unavailable'));
+  }, [available, open]);
   const dismiss = useCallback(() => setDialog(null), []);
 
   function startGoogle() {
@@ -263,7 +275,7 @@ export default function AccountProvider({ children }: { children: ReactNode }) {
   const retryable = dialog === 'intro' || dialog === 'cancelled' || dialog === 'error';
 
   const value: AccountContextValue = {
-    status, signedIn: status === 'signedIn', available, user, open: () => open(available ? 'intro' : 'unavailable'), profile: openProfile,
+    status, signedIn: status === 'signedIn', available, user, open: openAccount, profile: openProfile,
     signOut: () => { void doSignOut(); }, completeSignIn, showError,
   };
 
