@@ -124,7 +124,7 @@ body{margin:0}button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:tra
 .topic-layout{display:block}
 .side-banner{display:none}
 @media(min-width:1440px){
-  .topic-layout{display:grid;grid-template-columns:clamp(230px,calc(24vw - 120px),390px) minmax(0,1180px) clamp(230px,calc(24vw - 120px),390px);justify-content:center;column-gap:24px;padding:0 24px;align-items:start}
+  .topic-layout{display:grid;grid-template-columns:clamp(230px,calc(24vw - 120px),390px) minmax(0,1180px) clamp(230px,calc(24vw - 120px),390px);justify-content:center;column-gap:24px;padding:0 24px 44px;align-items:start}
   .topic-layout>.topic-page,.topic-layout>.quiz-page{margin:0 auto;width:100%;min-width:0}
   .quiz-layout .side-banner-art{animation:none}
   .side-banner{display:flex;flex-direction:column;align-items:center;gap:10px;position:sticky;top:104px;margin-top:28px;padding:26px 20px 20px;gap:14px;border-radius:40px;background:#fff;border:4px solid #F1F5F9;box-shadow:0 8px 0 0 #E2E8F0;text-align:center;pointer-events:none;user-select:none}
