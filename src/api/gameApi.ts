@@ -50,7 +50,7 @@ export type ApiSession = {
 
 /** Topic names/descriptions are served in the content language of the mode (VI = Vietnamese, EN and VI_EN = English). */
 export const getTopics = (languageMode: LanguageMode, signal?: AbortSignal) =>
-  apiGet<ApiTopic[]>(`/topics?languageMode=${languageMode}`, signal);
+  apiGet<ApiTopic[]>(`/topics?mode=${languageMode}`, signal);
 
 let gameModeId: Promise<string> | null = null;
 /** The backend requires gameModeId; there is a single GUESS mode today. Fetched once and cached for the visit. */
