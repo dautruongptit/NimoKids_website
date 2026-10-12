@@ -58,6 +58,7 @@ function NimoKids() {
   const [selected, setSelected] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [answerSpoken, setAnswerSpoken] = useState(false); // the picked answer and the result have been read aloud
   const [shareMessage, setShareMessage] = useState('');
   const total = session?.totalQuestions ?? 5;
   const score = result?.correctAnswers ?? 0;
@@ -168,7 +169,7 @@ function NimoKids() {
   /** Grading, score and streak are decided by the server; the UI only shows what it answers. */
   async function answer(optionId: string | null) {
     if (locked.current || transitioning || !question || !session) return;
-    locked.current = true; setTimerRunning(false); setSendError(false); setSelected(optionId);
+    locked.current = true; setTimerRunning(false); setSendError(false); setSelected(optionId); setAnswerSpoken(false);
     try {
       let data: ApiAnswer;
       try {
@@ -179,7 +180,11 @@ function NimoKids() {
         else throw error;
       }
       const state = data.result === 'CORRECT' ? 'correct' : data.result === 'TIMEOUT' ? 'timeout' : 'wrong';
-      setAnswerData(data); sound(state); say(data.feedback.message, questionLang);
+      setAnswerData(data); sound(state);
+      // First the answer the child picked, then the result; the next question waits until both have been read.
+      const pickedText = question.options.find(option => option.id === optionId)?.text;
+      const readResult = () => say(data.feedback.message, questionLang, () => setAnswerSpoken(true));
+      if (pickedText) say(pickedText, contentLang, readResult); else readResult();
     } catch (error) {
       const offline = error instanceof ApiError && ['NETWORK_ERROR', 'TIMEOUT', 'HTTP_502', 'HTTP_503', 'HTTP_504'].includes(error.code);
       if (offline) { setSendError(true); setSelected(null); locked.current = false; return; } // let the child tap again
@@ -242,10 +247,10 @@ function NimoKids() {
   }, [screen, timerRunning, feedback, transitioning, question?.id, muted]);
   useEffect(() => { if (screen === 'quiz' && timerRunning && seconds === 0 && !feedback && !transitioning) void answer(null); }, [screen, timerRunning, seconds, feedback, transitioning]);
   useEffect(() => {
-    if (screen !== 'quiz' || !answerData) return;
-    const timeout = setTimeout(() => { if (answerData.hasNextQuestion) setTransitioning(true); else void finishRound(); }, 800);
+    if (screen !== 'quiz' || !answerData || !answerSpoken) return;
+    const timeout = setTimeout(() => { if (answerData.hasNextQuestion) setTransitioning(true); else void finishRound(); }, 600);
     return () => clearTimeout(timeout);
-  }, [screen, answerData]);
+  }, [screen, answerData, answerSpoken]);
   useEffect(() => {
     if (!transitioning || screen !== 'quiz') return;
     const timeout = setTimeout(() => {
@@ -282,7 +287,7 @@ function NimoKids() {
     {screen === 'quiz' && question && <div className="topic-layout quiz-layout"><SideBanner kind="explore" /><main className="quiz-page"><section className={`quiz-panel ${transitioning ? 'question-transition' : ''}`}><div className="quiz-heading"><div className="quiz-progress-box"><span className="question-counter">{t('question', { n: questionNumber, total })}</span><div className="quiz-progress" aria-label={t('questionAria', { n: questionNumber, total })}>{Array.from({ length: total }, (_, position) => <span className={position < questionNumber ? 'current' : ''} key={position}>★</span>)}</div></div><h1><span>{question.questionText}</span>{question.questionTextVi && <small className="question-subtitle" lang="vi">{question.questionTextVi}</small>}</h1><div className="quiz-tools"><button className="tap-hear" onClick={listenAgain} disabled={!!feedback || transitioning || replaysLeft === 0}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" /><path d="M15.5 9a4 4 0 0 1 0 6" /><path d="M18 6.5a7.5 7.5 0 0 1 0 11" /></svg> {t('tapToHear')} <small>({replaysLeft})</small></button><div className={`countdown ${seconds <= 2 && !feedback ? 'timer-low' : ''}`} aria-label={t('secondsAria', { n: seconds })}><span>⏱</span><strong>{seconds}</strong></div></div></div><div className={`quiz-image ${topicColor}${question.visual ? ' counting-visual' : ''}`} key={question.id}>{question.visual?.type === 'COUNTING_OBJECTS' ? <div className="counting-objects" data-count={question.visual.count}>{Array.from({ length: question.visual.count }, (_, i) => <img key={i} className="counting-object" src={questionImageSrc(question.visual!.objectImage)!} alt="" />)}</div> : questionImageSrc(question.questionImage) && <img src={questionImageSrc(question.questionImage)!} alt={t('pictureAlt')} />}<span className="image-sparkle" aria-hidden="true">✦</span></div><div className={`feedback-line ${feedback || ''}`} role="status">{feedback === 'correct' ? t('fbCorrect') : feedback === 'wrong' ? t('fbWrong') : feedback === 'timeout' ? t('fbTimeout') : sendError ? t('tapAgain') : t('tapAnswer')}</div><div className="answer-grid">{question.options.map(entry => {
       const isCorrect = !!answerData && entry.id === answerData.correctAnswer.id;
       const isWrongPick = !!answerData && entry.id === selected && !isCorrect;
-      return <button key={entry.id} className={`quiz-answer ${isCorrect ? 'answer-correct' : isWrongPick ? 'answer-wrong' : feedback ? 'answer-disabled' : ''}`} onClick={() => void answer(entry.id)} disabled={!!feedback || transitioning}><span>{entry.text}</span>{isCorrect ? <span className="state-icon">✓</span> : isWrongPick ? <span className="state-icon">×</span> : null}</button>;
+      return <div key={entry.id} className="quiz-answer-cell"><button className={`quiz-answer ${isCorrect ? 'answer-correct' : isWrongPick ? 'answer-wrong' : feedback ? 'answer-disabled' : ''}`} onClick={() => void answer(entry.id)} disabled={!!feedback || transitioning}><span>{entry.text}</span>{isCorrect ? <span className="state-icon">✓</span> : isWrongPick ? <span className="state-icon">×</span> : null}</button><button className="audio-button answer-hear" onClick={() => say(entry.text, contentLang)} disabled={!!feedback || transitioning} aria-label={t('hear', { name: entry.text })}><Icon file="8e6ac" /></button></div>;
     })}</div>{feedback === 'correct' && <div className="celebration-sparkles" aria-hidden="true">✦　 ✧　 ✦　 ✧　 ✦</div>}</section><Hint><strong>{feedback === 'correct' ? t('quizHintCorrect') : feedback ? t('quizHintAnswered') : t('quizHintIdle')}</strong><p>{feedback ? t('quizHint2Answered') : t('quizHint2Idle')}</p></Hint></main><SideBanner kind="play" /></div>}
 
     {screen === 'result' && <main className="result-page"><Progress step={4} /><section className="result-panel"><span className="welcome-pill">{t('resultPill')}</span><div className="reward-picture"><span>✦</span><span role="img" aria-label={t('trophy')}>🏆</span><span>✧</span></div><h1>{t('greatJob')}</h1><p>{t('resultText')}</p><div className="reward-stars" aria-label={t('starsLabel', { n: score })}>{Array.from({ length: total }, (_, position) => <span className={position < score ? 'earned' : ''} key={position}>★</span>)}</div><div className="final-score">{score}<span> / {total}</span></div><div className="result-stats"><div><span>{t('accuracy')}</span><strong>{Math.round(result?.accuracy ?? 0)}%</strong></div><div><span>{t('bestStreak')}</span><strong>{result?.maxStreak ?? 0}</strong></div><div><span>{t('currentStreak')}</span><strong>{result?.currentStreak ?? 0}</strong></div></div><Button onClick={start}>{t('playAgain')}</Button><div className="result-actions"><Button variant="blue" onClick={() => go('home')}>{t('homeButton')}</Button><Button variant="lavender" onClick={share}>{t('share')}</Button></div><p className="replay-note">{topicEmoji} {t('replayNote', { topic: topicName, age: age ?? '' })}</p><p className="share-message" role="status">{shareMessage}</p></section></main>}

@@ -30,9 +30,9 @@ export function isLanguageMode(value: unknown): value is LanguageMode {
   return value === 'EN' || value === 'VI' || value === 'VI_EN';
 }
 
-/** First visit: always "learn English" (VI_EN). The choice is then kept in localStorage; a stored choice wins. */
+/** First visit: always Vietnamese (VI). The choice is then kept in localStorage; a stored choice wins. */
 export function detectLanguageMode(): LanguageMode {
-  return 'VI_EN';
+  return 'VI';
 }
 
 function readStored(): LanguageMode | null {
