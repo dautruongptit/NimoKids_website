@@ -6,26 +6,17 @@
 export type TopicVisual = { emoji: string; color: string; image?: string };
 
 const VISUALS: Record<string, TopicVisual> = {
+  COLORS: { emoji: '🎨', color: 'pink' },
   ANIMALS: { emoji: '🐶', color: 'purple', image: '/assets/22216.png' },
+  VEHICLES: { emoji: '🚗', color: 'purple' },
   FRUITS: { emoji: '🍎', color: 'pink', image: '/assets/556cb.png' },
   VEGETABLES: { emoji: '🥕', color: 'yellow' },
-  VEHICLES: { emoji: '🚗', color: 'purple' },
-  COLORS: { emoji: '🎨', color: 'pink' },
-  SHAPES: { emoji: '⭐', color: 'blue' },
-  NUMBERS: { emoji: '🔢', color: 'purple' },
-  TOYS: { emoji: '🧸', color: 'pink' },
-  SEA_ANIMALS: { emoji: '🐠', color: 'blue' },
-  ALPHABET: { emoji: '🔤', color: 'yellow' },
-  CLOTHES: { emoji: '👕', color: 'pink' },
-  HOME: { emoji: '🏠', color: 'purple' },
+  OBJECTS: { emoji: '🪑', color: 'blue' },
   BODY_PARTS: { emoji: '👀', color: 'blue' },
-  NATURE: { emoji: '🌳', color: 'yellow' },
-  WEATHER: { emoji: '☀️', color: 'blue' },
-  FARM_ANIMALS: { emoji: '🐮', color: 'yellow' },
-  FAMILY: { emoji: '👨‍👩‍👧', color: 'pink' },
-  MUSIC_INSTRUMENTS: { emoji: '🎵', color: 'purple' },
-  FOOD: { emoji: '🍔', color: 'pink' },
-  DAILY_ACTIVITIES: { emoji: '🧼', color: 'blue' },
+  TOYS: { emoji: '🧸', color: 'pink' },
+  JOB: { emoji: '👩‍⚕️', color: 'yellow' },
+  MATH: { emoji: '🔢', color: 'purple' },
+  PEOPLE_CHARACTERS: { emoji: '🦸', color: 'blue' },
 };
 
 const FALLBACK_COLORS = ['pink', 'purple', 'yellow', 'blue'];
